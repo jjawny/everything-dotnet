@@ -4,6 +4,13 @@ namespace SpeedrunAuditingApi;
 
 public class AuditInterceptor : SaveChangesInterceptor
 {
+  private readonly IHttpContextAccessor _httpContextAccessor;
+
+  public AuditInterceptor(IHttpContextAccessor httpContextAccessor)
+  {
+    _httpContextAccessor = httpContextAccessor;
+  }
+
   public override InterceptionResult<int> SavingChanges(
     DbContextEventData eventData,
     InterceptionResult<int> result
