@@ -1,0 +1,43 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace SpeedrunAuditingApi.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddedCreditCards : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "CreditCards",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    HolderName = table.Column<string>(type: "TEXT", nullable: true),
+                    BankName = table.Column<string>(type: "TEXT", nullable: true),
+                    Number = table.Column<string>(type: "TEXT", nullable: true),
+                    Cvc = table.Column<string>(type: "TEXT", nullable: true),
+                    Expiry = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Audit_CreatedBy = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Audit_UpdatedBy = table.Column<Guid>(type: "TEXT", nullable: true),
+                    Audit_CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Audit_UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Audit_IsDeleted = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CreditCards", x => x.Id);
+                });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "CreditCards");
+        }
+    }
+}
