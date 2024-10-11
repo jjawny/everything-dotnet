@@ -20,7 +20,7 @@ public class AuditInterceptor : SaveChangesInterceptor
     // var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value ?? Guid.Empty.ToString();
     var userId = Guid.NewGuid(); // DUMMY FOR NOW
 
-    if (eventData.Context != null) eventData.Context.PerformAudit(userId);
+    eventData.Context?.PerformAudit(userId);
     return base.SavingChanges(eventData, result);
   }
 
@@ -33,7 +33,7 @@ public class AuditInterceptor : SaveChangesInterceptor
     // var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value ?? Guid.Empty.ToString();
     var userId = Guid.NewGuid(); // DUMMY FOR NOW
 
-    if (eventData.Context != null) eventData.Context.PerformAudit(userId);
+    eventData.Context?.PerformAudit(userId);
     return base.SavingChangesAsync(eventData, result, cancelToken);
   }
 }
