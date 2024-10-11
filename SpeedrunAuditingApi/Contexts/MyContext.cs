@@ -30,6 +30,10 @@ public class MyContext : DbContext
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
-    modelBuilder.Entity<CreditCard>().OwnsOne(cc => cc.Audit);
+    modelBuilder.Entity<CreditCard>(entity =>
+    {
+      entity.OwnsOne(cc => cc.Audit);
+      entity.HasQueryFilter(e => !e.Audit.IsDeleted);
+    });
   }
 }
