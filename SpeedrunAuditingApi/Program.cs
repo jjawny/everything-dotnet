@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SpeedrunAuditingApi;
 using SpeedrunAuditingApi.Contexts;
 using SpeedrunAuditingApi.Models;
+using SpeedrunAuditingApi.Services;
 
 // DI CONTAINER
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<AuditInterceptor>();
     builder.Services.AddDbContext<MyContext>();
+    builder.Services.AddScoped<EliteEmployeesService>();
 }
 
 // HTTP pipeline a.k.a
@@ -33,75 +34,93 @@ var app = builder.Build();
 // ██║░░██╗██╔══██╗██║░░░██║██║░░██║
 // ╚█████╔╝██║░░██║╚██████╔╝██████╔╝
 // ░╚════╝░╚═╝░░╚═╝░╚═════╝░╚═════╝░
-// skip [validating, sanitizing, mapping, pagination, error handling, ...] as not the focus here
 app.MapGet("/api/eliteemployees/{id:guid}", async (
     Guid id,
-    [FromServices] MyContext ctx
+    [FromServices] EliteEmployeesService eliteEmployeesService
 ) =>
 {
-    var card = await ctx.EliteEmployees.AsNoTracking().Where(c => c.Id == id).FirstOrDefaultAsync();
-    return card == null ? Results.NotFound() : Results.Ok(card);
+    var eliteEmployee = await eliteEmployeesService.FindAsync(id);
+    var res = eliteEmployee == null ? Results.NotFound() : Results.Ok(eliteEmployee);
+    return res;
 });
 
 app.MapGet("/api/eliteemployees", async (
-    [FromServices] MyContext ctx,
+    [FromServices] EliteEmployeesService eliteEmployeesService,
     [FromQuery] bool isIncludeSoftDeleted = false
 ) =>
 {
-    var query = ctx.EliteEmployees.AsNoTracking().AsQueryable();
-    if (isIncludeSoftDeleted) query = query.IgnoreQueryFilters();
-    var allCards = await query.ToListAsync();
-    return allCards.Count > 0 ? Results.Ok(allCards) : Results.NoContent();
+    var eliteEmployees = await eliteEmployeesService.GetAllAsync();
+    var res = eliteEmployees.Count > 0 ? Results.Ok(eliteEmployees) : Results.NoContent();
+    return res;
 });
 
 app.MapPost("/api/eliteemployees", async (
     [FromBody] EliteEmployee newEmployee,
-    [FromServices] MyContext ctx
+    [FromServices] EliteEmployeesService eliteEmployeesService
 ) =>
 {
-    var isNameTaken = await ctx.EliteEmployees.AnyAsync(e => string.Equals(e.Name, newEmployee.Name)); // efcore translates this to case-insensitive by default in SQLite
-    if (isNameTaken) return Results.Conflict($"Name '{newEmployee.Name}' taken, we get confused when there's 1+ employees with the same name 🤡");
-    ctx.EliteEmployees.Add(newEmployee);
-    await ctx.SaveChangesAsync();
-    return Results.Created($"/api/eliteemployees/{newEmployee.Id}", newEmployee);
+    try
+    {
+        var employee = await eliteEmployeesService.CreateAsync(newEmployee);
+        var res = Results.Created($"/api/eliteemployees/{employee.Id}", employee);
+        return res;
+    }
+    catch (ArgumentException ex)
+    {
+        // prefer result pattern here
+        var is404 = ex.Message.Contains("not found", StringComparison.InvariantCultureIgnoreCase);
+        if (is404) return Results.NotFound(ex.Message);
+        else return Results.BadRequest(ex.Message);
+    }
 });
 
 app.MapPatch("/api/eliteemployees/{id:guid}", async (
     Guid id,
-    [FromBody] EliteEmployee newEmployeeDetails,
-    [FromServices] MyContext ctx
+    [FromBody] bool isElite,
+    [FromServices] EliteEmployeesService eliteEmployeesService
 ) =>
 {
-    var currEmployee = await ctx.EliteEmployees.FindAsync(id);
-    if (currEmployee == null) return Results.NotFound();
-    currEmployee.Name = newEmployeeDetails.Name;
-    currEmployee.IsElite = newEmployeeDetails.IsElite;
-    ctx.Update(currEmployee);
-    await ctx.SaveChangesAsync();
-    return Results.Ok(currEmployee);
+    try
+    {
+        var employee = await eliteEmployeesService.UpdateAsync(id, isElite);
+        var res = Results.Ok(employee);
+        return res;
+    }
+    catch (ArgumentException ex)
+    {
+        // prefer result pattern here
+        var is404 = ex.Message.Contains("not found", StringComparison.InvariantCultureIgnoreCase);
+        if (is404) return Results.NotFound(ex.Message);
+        else return Results.BadRequest(ex.Message);
+    }
 });
 
 app.MapDelete("/api/eliteemployees/{id:guid}", async (
     Guid id,
-    [FromServices] MyContext ctx
+    [FromServices] EliteEmployeesService eliteEmployeesService
 ) =>
 {
-    var currEmployee = await ctx.EliteEmployees.FindAsync(id);
-    if (currEmployee == null) return Results.NotFound();
-    ctx.EliteEmployees.Remove(currEmployee);
-    await ctx.SaveChangesAsync();
-    return Results.Ok();
+    try
+    {
+        await eliteEmployeesService.DeleteAsync(id);
+        var res = Results.Ok();
+        return res;
+    }
+    catch (ArgumentException ex)
+    {
+        // prefer result pattern here
+        var is404 = ex.Message.Contains("not found", StringComparison.InvariantCultureIgnoreCase);
+        if (is404) return Results.NotFound(ex.Message);
+        else return Results.BadRequest(ex.Message);
+    }
 });
 
 app.MapDelete("/api/nuke", async (
-    [FromServices] MyContext ctx
+    [FromServices] EliteEmployeesService eliteEmployeesService
 ) =>
 {
-    var allEmployees = await ctx.EliteEmployees.IgnoreQueryFilters().ToListAsync();
-    var count = allEmployees.Count();
-    ctx.EliteEmployees.RemoveRange(allEmployees);
-    await ctx.SaveChangesAsync();
-    return Results.Ok($"R.I.P those {count} guys");
+    var totalDeleted = await eliteEmployeesService.DeleteAllAsync();
+    var res = Results.Ok($"R.I.P those {totalDeleted} guys");
 });
 
 app.Run();
