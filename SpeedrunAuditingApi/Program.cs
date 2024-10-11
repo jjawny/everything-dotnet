@@ -76,6 +76,7 @@ app.MapPatch("/api/eliteemployees/{id:guid}", async (
     if (currEmployee == null) return Results.NotFound();
     currEmployee.Name = newEmployeeDetails.Name;
     currEmployee.IsElite = newEmployeeDetails.IsElite;
+    ctx.Update(currEmployee);
     await ctx.SaveChangesAsync();
     return Results.Ok(currEmployee);
 });
