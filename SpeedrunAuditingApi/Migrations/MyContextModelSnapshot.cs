@@ -40,12 +40,12 @@ namespace SpeedrunAuditingApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CreditCards");
+                    b.ToTable("CreditCards", (string)null);
                 });
 
             modelBuilder.Entity("SpeedrunAuditingApi.Models.CreditCard", b =>
                 {
-                    b.OwnsOne("SpeedrunAuditingApi.Models.Audit", "Audit", b1 =>
+                    b.OwnsOne("SpeedrunAuditingApi.Models.CreditCard.Audit#SpeedrunAuditingApi.Models.Audit", "Audit", b1 =>
                         {
                             b1.Property<Guid>("CreditCardId")
                                 .HasColumnType("TEXT");
@@ -67,7 +67,7 @@ namespace SpeedrunAuditingApi.Migrations
 
                             b1.HasKey("CreditCardId");
 
-                            b1.ToTable("CreditCards");
+                            b1.ToTable("CreditCards", (string)null);
 
                             b1.WithOwner()
                                 .HasForeignKey("CreditCardId");
