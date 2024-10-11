@@ -1,6 +1,9 @@
-@SpeedrunAuditingApi_HostAddress = http://localhost:5046
+@host = http://localhost:5046
 
-GET {{SpeedrunAuditingApi_HostAddress}}/weatherforecast/
+GET {{host}}/api/eliteemployees/
 Accept: application/json
+###
 
+DELETE {{host}}/api/nuke/
+Accept: application/json
 ###
