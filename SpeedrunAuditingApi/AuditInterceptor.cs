@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using SpeedrunAuditingApi.Utils;
 
 namespace SpeedrunAuditingApi;
 
@@ -16,7 +17,10 @@ public class AuditInterceptor : SaveChangesInterceptor
     InterceptionResult<int> result
   )
   {
-    // TODO: audit
+    // var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value ?? Guid.Empty.ToString();
+    var userId = Guid.NewGuid(); // DUMMY FOR NOW
+
+    if (eventData.Context != null) eventData.Context.PerformAudit(userId);
     return base.SavingChanges(eventData, result);
   }
 
@@ -26,7 +30,10 @@ public class AuditInterceptor : SaveChangesInterceptor
     CancellationToken cancelToken = default
   )
   {
-    // TODO: audit
+    // var userId = _httpContextAccessor.HttpContext?.User?.FindFirst("sub")?.Value ?? Guid.Empty.ToString();
+    var userId = Guid.NewGuid(); // DUMMY FOR NOW
+
+    if (eventData.Context != null) eventData.Context.PerformAudit(userId);
     return base.SavingChangesAsync(eventData, result, cancelToken);
   }
 }
