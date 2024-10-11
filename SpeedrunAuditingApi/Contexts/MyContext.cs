@@ -14,8 +14,7 @@ public class MyContext : DbContext
     AuditInterceptor auditInterceptor
   ) : base(opts)
   {
-    var rootPath = AppDomain.CurrentDomain.BaseDirectory;
-    _dbPath = Path.Combine(rootPath, "MyContext.db");
+    _dbPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MyContext.db");
     _auditInterceptor = auditInterceptor;
   }
 
