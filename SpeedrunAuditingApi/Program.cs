@@ -34,6 +34,22 @@ var app = builder.Build();
 // ██║░░██╗██╔══██╗██║░░░██║██║░░██║
 // ╚█████╔╝██║░░██║╚██████╔╝██████╔╝
 // ░╚════╝░╚═╝░░╚═╝░╚═════╝░╚═════╝░
+// --------------------------------
+// Opinionated minimal API example:
+// --------------------------------
+// app.MapGet("/api/friends/{id}",
+//   [...Filters]
+//   [AllowAnonymous]
+//   [Authorize(Roles = "MyAzureHomie")]
+//   async (
+//     Guid urlPathParams,
+//     [FromQuery] string? urlQueryParams
+//     [FromBody] MyDto thePayload,
+//     [FromServices] MyService myService
+//   ) =>
+//   {
+//      biz logic
+//   });
 app.MapGet("/api/eliteemployees/{id:guid}", async (
     Guid id,
     [FromServices] EliteEmployeesService eliteEmployeesService
