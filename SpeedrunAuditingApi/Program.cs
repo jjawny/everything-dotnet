@@ -1,16 +1,22 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SpeedrunAuditingApi;
 using SpeedrunAuditingApi.Contexts;
+using SpeedrunAuditingApi.Models;
 
-// 1. Add services into DI container
+// DI CONTAINER
 var builder = WebApplication.CreateBuilder(args);
 {
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
+    builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<AuditInterceptor>();
     builder.Services.AddDbContext<MyContext>();
 }
 
-// 2. Configure the HTTP request (middleware) pipeline.
+// HTTP pipeline a.k.a
+// █▀▄▀█ █ █▀▄ █▀▄ █░░ █▀▀ █░█░█ ▄▀█ █▀█ █▀▀
+// █░▀░█ █ █▄▀ █▄▀ █▄▄ ██▄ ▀▄▀▄▀ █▀█ █▀▄ ██▄
 var app = builder.Build();
 {
     if (app.Environment.IsDevelopment())
@@ -21,31 +27,80 @@ var app = builder.Build();
     app.UseHttpsRedirection();
 }
 
-// 3. CRUD
-app.MapGet("/api/creditcards", () =>
+// ░█████╗░██████╗░██╗░░░██╗██████╗░
+// ██╔══██╗██╔══██╗██║░░░██║██╔══██╗
+// ██║░░╚═╝██████╔╝██║░░░██║██║░░██║
+// ██║░░██╗██╔══██╗██║░░░██║██║░░██║
+// ╚█████╔╝██║░░██║╚██████╔╝██████╔╝
+// ░╚════╝░╚═╝░░╚═╝░╚═════╝░╚═════╝░
+// skip [validating, sanitizing, mapping, pagination, error handling, ...] as not the focus here
+app.MapGet("/api/eliteemployees/{id:guid}", async (
+    Guid id,
+    [FromServices] MyContext ctx
+) =>
 {
-    return Results.NotFound();
+    var card = await ctx.EliteEmployees.AsNoTracking().Where(c => c.Id == id).FirstOrDefaultAsync();
+    return card == null ? Results.NotFound() : Results.Ok(card);
 });
 
-app.MapPost("/api/creditcards", () =>
+app.MapGet("/api/eliteemployees", async (
+    [FromServices] MyContext ctx,
+    [FromQuery] bool isIncludeSoftDeleted = false
+) =>
 {
-    return Results.NotFound();
+    var query = ctx.EliteEmployees.AsNoTracking().AsQueryable();
+    if (isIncludeSoftDeleted) query = query.IgnoreQueryFilters();
+    var allCards = await query.ToListAsync();
+    return allCards.Count > 0 ? Results.Ok(allCards) : Results.NoContent();
 });
 
-app.MapPatch("/api/creditcards/{id}", () =>
+app.MapPost("/api/eliteemployees", async (
+    [FromBody] EliteEmployee newEmployee,
+    [FromServices] MyContext ctx
+) =>
 {
-    return Results.NotFound();
+    var isNameTaken = await ctx.EliteEmployees.AnyAsync(e => string.Equals(e.Name, newEmployee.Name)); // efcore translates this to case-insensitive by default in SQLite
+    if (isNameTaken) return Results.Conflict($"Name '{newEmployee.Name}' taken, we get confused when there's 1+ employees with the same name 🤡");
+    ctx.EliteEmployees.Add(newEmployee);
+    await ctx.SaveChangesAsync();
+    return Results.Created($"/api/eliteemployees/{newEmployee.Id}", newEmployee);
 });
 
-app.MapDelete("/api/creditcards/{id}", () =>
+app.MapPatch("/api/eliteemployees/{id:guid}", async (
+    Guid id,
+    [FromBody] EliteEmployee newEmployeeDetails,
+    [FromServices] MyContext ctx
+) =>
 {
-    return Results.NotFound();
+    var currEmployee = await ctx.EliteEmployees.FindAsync(id);
+    if (currEmployee == null) return Results.NotFound();
+    currEmployee.Name = newEmployeeDetails.Name;
+    currEmployee.IsElite = newEmployeeDetails.IsElite;
+    await ctx.SaveChangesAsync();
+    return Results.Ok(currEmployee);
 });
 
-app.MapGet("/api/nuke", () =>
+app.MapDelete("/api/eliteemployees/{id:guid}", async (
+    Guid id,
+    [FromServices] MyContext ctx
+) =>
 {
-    return Results.NotFound();
+    var currEmployee = await ctx.EliteEmployees.FindAsync(id);
+    if (currEmployee == null) return Results.NotFound();
+    ctx.EliteEmployees.Remove(currEmployee);
+    await ctx.SaveChangesAsync();
+    return Results.Ok();
 });
 
+app.MapDelete("/api/nuke", async (
+    [FromServices] MyContext ctx
+) =>
+{
+    var allEmployees = await ctx.EliteEmployees.IgnoreQueryFilters().ToListAsync();
+    var count = allEmployees.Count();
+    ctx.EliteEmployees.RemoveRange(allEmployees);
+    await ctx.SaveChangesAsync();
+    return Results.Ok($"R.I.P those {count} guys");
+});
 
 app.Run();
