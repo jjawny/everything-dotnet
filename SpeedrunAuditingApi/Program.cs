@@ -19,12 +19,31 @@ var app = builder.Build();
     app.UseHttpsRedirection();
 }
 
-// 3. Endpoints
-app.MapGet("/api/placeholder", () =>
+// 3. CRUD
+app.MapGet("/api/creditcards", () =>
 {
     return Results.NotFound();
 });
 
+app.MapPost("/api/creditcards", () =>
+{
+    return Results.NotFound();
+});
+
+app.MapPatch("/api/creditcards/{id}", () =>
+{
+    return Results.NotFound();
+});
+
+app.MapDelete("/api/creditcards/{id}", () =>
+{
+    return Results.NotFound();
+});
+
+app.MapGet("/api/nuke", () =>
+{
+    return Results.NotFound();
+});
 
 
 app.Run();
