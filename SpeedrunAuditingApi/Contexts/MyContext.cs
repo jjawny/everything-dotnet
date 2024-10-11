@@ -5,7 +5,7 @@ namespace SpeedrunAuditingApi.Contexts;
 
 public class MyContext : DbContext
 {
-  public DbSet<CreditCard> CreditCards { get; set; }
+  public DbSet<EliteEmployee> EliteEmployees { get; set; }
   private readonly object _dbPath;
   private readonly AuditInterceptor _auditInterceptor;
 
@@ -30,9 +30,9 @@ public class MyContext : DbContext
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
-    modelBuilder.Entity<CreditCard>(entity =>
+    modelBuilder.Entity<EliteEmployee>(entity =>
     {
-      entity.OwnsOne(cc => cc.Audit);
+      entity.OwnsOne(e => e.Audit);
       entity.HasQueryFilter(e => !e.Audit.IsDeleted);
     });
   }
